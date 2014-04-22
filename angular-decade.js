@@ -56,26 +56,19 @@
           var decades = [];
           var mMin = moment(this.min);
           var mMax = moment(this.max);
+
+          function isInRange(dec) {
+            return dec.from >= mMin &&
+              dec.from <= mMax &&
+              dec.to >= mMin &&
+              dec.to <= mMax;
+          }
+
           var dec;
-          dec = dec1(y, m);
-          if (dec.from >= mMin && dec.from <= mMax && dec.to >= mMin && dec.to <= mMax) {
-            decades.push(dec);
-          }
-
-          dec = dec2(y, m);
-          if (dec.from >= mMin && dec.from <= mMax && dec.to >= mMin && dec.to <= mMax) {
-            decades.push(dec);
-          }
-
-          dec = dec3(y, m);
-          if (dec.from >= mMin && dec.from <= mMax && dec.to >= mMin && dec.to <= mMax) {
-            decades.push(dec);
-          }
-
-          dec = fullMonth(y, m);
-          if (dec.from >= mMin && dec.from <= mMax && dec.to >= mMin && dec.to <= mMax) {
-            decades.push(dec);
-          }
+          isInRange(dec = dec1(y, m)) && decades.push(dec);
+          isInRange(dec = dec2(y, m)) && decades.push(dec);
+          isInRange(dec = dec3(y, m)) && decades.push(dec);
+          isInRange(dec = fullMonth(y, m)) && decades.push(dec);
 
           return decades;
         }
@@ -83,7 +76,7 @@
         function dec1(y, m) {
           return {
             id: 1,
-            name: '1...10',
+            name: '01...10 (decade 1)',
             from: moment({
               year: y,
               month: m,
@@ -100,7 +93,7 @@
         function dec2(y, m) {
           return {
             id: 2,
-            name: '11...21',
+            name: '11...21 (decade 2)',
             from: moment({
               year: y,
               month: m,
@@ -127,7 +120,7 @@
               month: m
             }).endOf('month')
           };
-          dec.name = '21...' + dec.to.date();
+          dec.name = '21...' + dec.to.date() + ' (decade 3)';
           return dec;
         }
 
@@ -144,7 +137,7 @@
               month: m
             }).endOf('month')
           };
-          dec.name = '1...' + dec.to.date() + ' (full month)';
+          dec.name = '01...' + dec.to.date() + ' (full month)';
           return dec;
         }
 

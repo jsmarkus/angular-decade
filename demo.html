@@ -5,11 +5,14 @@
 <body ng-app="demo">
   <div ng-controller="DemoCtrl">
     <ng-decade
-      min="minDate"
-      max="maxDate"
-      ng-model="decade"
-    >
-    </ng-decade>
+      ng-model="decadeCode"
+      decade="fullDecade"
+      utc="true"
+    ></ng-decade>
+
+    <p>Code <i>(yearSince1970 * 4 * 12 + month * 4 + decade)</i> = {{decadeCode}} </p>
+    <p>Full = {{fullDecade}}</p>
+
   </div>
 
   <script src="./bower_components/moment/moment.js"></script>

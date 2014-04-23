@@ -9,10 +9,9 @@
     .module('ngDecade', ['NGSelectLink'])
     .constant('ngDecadeConfig', {})
     .directive('ngDecade', [
-      '$timeout',
       'ngDecadeConfig',
 
-      function($timeout, ngDecadeConfig) {
+      function(ngDecadeConfig) {
         var utcMoment = moment.utc.bind(moment);
 
         function getOptions(scope) {
@@ -72,19 +71,29 @@
           return result;
         }
 
+        function commitObject(scope) {
+          var y = scope.y,
+            m = scope.m,
+            e = scope.e;
+          if (isNaN(y + m + e)) {
+            scope.decade = undefined;
+            return;
+          }
+          var options = getOptions(scope);
+          var dec = createDecade[e - 1](options.moment, y, m);
+          scope.decade = dec;
+        }
+
         function onChange(modelController) {
           var decadeCode = encode(this.y, this.m, this.e);
-          if (undefined !== decadeCode) {
-            this.decade = this.decadeObject;
-          } else {
-            this.decade = undefined;
-          }
+          commitObject(this);
           modelController.$setViewValue(decadeCode);
         }
 
         function onModelChange() {
           var values = decode(this.model);
           angular.extend(this, values);
+          commitObject(this);
         }
 
         function getYears() {
@@ -148,82 +157,88 @@
           }
 
           var dec;
-          isInRange(dec = dec1(options.moment, y, m)) && decades.push(dec);
-          isInRange(dec = dec2(options.moment, y, m)) && decades.push(dec);
-          isInRange(dec = dec3(options.moment, y, m)) && decades.push(dec);
-          isInRange(dec = fullMonth(options.moment, y, m)) && decades.push(dec);
+
+          for (var i = 0; i <= 3; i++) {
+            dec = createDecade[i](options.moment, y, m);
+            if (isInRange(dec)) {
+              decades.push(dec);
+            }
+          }
 
           return decades;
         }
 
-        function dec1(moment, y, m) {
-          return {
-            id: 1,
-            name: '01...10 (decade 1)',
-            from: moment({
-              year: y,
-              month: m,
-              day: 1
-            }),
-            to: moment({
-              year: y,
-              month: m,
-              day: 10
-            })
-          };
-        }
 
-        function dec2(moment, y, m) {
-          return {
-            id: 2,
-            name: '11...21 (decade 2)',
-            from: moment({
-              year: y,
-              month: m,
-              day: 11
-            }),
-            to: moment({
-              year: y,
-              month: m,
-              day: 21
-            })
-          };
-        }
+        var createDecade = [
 
-        function dec3(moment, y, m) {
-          var dec = {
-            id: 3,
-            from: moment({
-              year: y,
-              month: m,
-              day: 21
-            }),
-            to: moment({
-              year: y,
-              month: m
-            }).endOf('month')
-          };
-          dec.name = '21...' + dec.to.date() + ' (decade 3)';
-          return dec;
-        }
+          function(moment, y, m) {
+            return {
+              id: 1,
+              name: '01...10 (decade 1)',
+              from: moment({
+                year: y,
+                month: m,
+                day: 1
+              }),
+              to: moment({
+                year: y,
+                month: m,
+                day: 10
+              })
+            };
+          },
 
-        function fullMonth(moment, y, m) {
-          var dec = {
-            id: 4,
-            from: moment({
-              year: y,
-              month: m,
-              day: 1
-            }),
-            to: moment({
-              year: y,
-              month: m
-            }).endOf('month')
-          };
-          dec.name = '01...' + dec.to.date() + ' (full month)';
-          return dec;
-        }
+          function(moment, y, m) {
+            return {
+              id: 2,
+              name: '11...21 (decade 2)',
+              from: moment({
+                year: y,
+                month: m,
+                day: 11
+              }),
+              to: moment({
+                year: y,
+                month: m,
+                day: 21
+              })
+            };
+          },
 
+          function(moment, y, m) {
+            var dec = {
+              id: 3,
+              from: moment({
+                year: y,
+                month: m,
+                day: 21
+              }),
+              to: moment({
+                year: y,
+                month: m
+              }).endOf('month')
+            };
+            dec.name = '21...' + dec.to.date() + ' (decade 3)';
+            return dec;
+          },
+
+          function(moment, y, m) {
+            var dec = {
+              id: 4,
+              from: moment({
+                year: y,
+                month: m,
+                day: 1
+              }),
+              to: moment({
+                year: y,
+                month: m
+              }).endOf('month')
+            };
+            dec.name = '01...' + dec.to.date() + ' (full month)';
+            return dec;
+          }
+        ];
 
         return {
           template: [
@@ -255,7 +270,6 @@
             '    ng-model="e" ',
             '    ng-options="_.id as _.name for _ in decades" ',
             '    ng-select-link="getDecades([y,m])"',
-            '    ng-select-link-item="decadeObject"',
             '    ng-select-link-empty="\'Select period...\'"',
             '  ></select>',
             ' </div>',
@@ -276,7 +290,7 @@
               getYears: getYears,
               getMonths: getMonths,
               getDecades: getDecades,
-              onChange: $timeout.bind(null, onChange.bind(scope, modelController))
+              onChange: onChange.bind(scope, modelController)
             });
 
             modelController.$render = onModelChange.bind(scope);

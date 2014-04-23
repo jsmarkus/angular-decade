@@ -48,7 +48,28 @@
           if (undefined === y || undefined === m || undefined === e) {
             return undefined;
           }
-          return e + 4 * m + 48 * (y - 1970);
+          return e - 1 + 4 * m + 48 * (y - 1970);
+        }
+
+        function decode(code) {
+          var result = {
+            e: undefined,
+            m: undefined,
+            y: undefined
+          };
+          if (undefined === code) {
+            return result;
+          }
+          code = parseInt(code, 10);
+          if (isNaN(code)) {
+            return result;
+          }
+
+          result.e = code % 4 + 1;
+          result.m = Math.floor(code / 4) % 12;
+          result.y = Math.floor(code / 48) + 1970;
+
+          return result;
         }
 
         function onChange(modelController) {
@@ -59,6 +80,11 @@
             this.decade = undefined;
           }
           modelController.$setViewValue(decadeCode);
+        }
+
+        function onModelChange() {
+          var values = decode(this.model);
+          angular.extend(this, values);
         }
 
         function getYears() {
@@ -252,6 +278,8 @@
               getDecades: getDecades,
               onChange: $timeout.bind(null, onChange.bind(scope, modelController))
             });
+
+            modelController.$render = onModelChange.bind(scope);
           }
         };
       }
